@@ -1,0 +1,402 @@
+<title>Refund Ready Japan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Unofficial tracker for Japan's new tax-free refund system (from Nov 1, 2026). Log purchases, see estimated refunds and 90-day deadlines. Data stays in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a travel-document desk — summary "boarding strip" on top, purchase ledger left, airport checklist + rules right. */
+:root{
+  --bg:#F2F3EF; --paper:#FFFFFF; --sunk:#E9EBE5; --line:#D9DCD3; --line-2:#C5C9BE;
+  --ink:#1B2238; --muted:#5D6475; --dim:#8A90A0;
+  --ai:#24408E; --ai-soft:#E3E8F6; --stamp:#C8372B; --stamp-soft:#F8E4E1;
+  --ok:#1E7A4F; --ok-soft:#DFF1E7; --warn:#9A6200; --warn-soft:#FBEFD6;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --sans:"Instrument Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1320; --paper:#161B2B; --sunk:#1C2234; --line:#283049; --line-2:#36405E;
+  --ink:#E8EBF4; --muted:#A0A7BA; --dim:#6F7790;
+  --ai:#8EA8F0; --ai-soft:#1F2A4C; --stamp:#F07A6C; --stamp-soft:#3A1F22;
+  --ok:#5ED39A; --ok-soft:#173327; --warn:#F2C062; --warn-soft:#3A2E14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1320; --paper:#161B2B; --sunk:#1C2234; --line:#283049; --line-2:#36405E;
+  --ink:#E8EBF4; --muted:#A0A7BA; --dim:#6F7790;
+  --ai:#8EA8F0; --ai-soft:#1F2A4C; --stamp:#F07A6C; --stamp-soft:#3A1F22;
+  --ok:#5ED39A; --ok-soft:#173327; --warn:#F2C062; --warn-soft:#3A2E14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px;border-radius:6px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.015em;text-wrap:balance}
+
+/* header */
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.brand{display:flex;gap:14px;align-items:center}
+.seal{width:46px;height:46px;border-radius:50%;border:2px solid var(--stamp);color:var(--stamp);display:grid;place-items:center;font:700 12px/1 var(--display);transform:rotate(-8deg);flex:none;text-align:center}
+h1{font-size:clamp(26px,4vw,34px);font-weight:700;line-height:1.05}
+.sub{color:var(--muted);font-size:13.5px;margin-top:4px;max-width:58ch}
+.badge{display:inline-flex;align-items:center;gap:6px;font:500 11.5px var(--mono);color:var(--warn);background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:999px;padding:4px 10px;white-space:nowrap}
+
+/* summary strip */
+.strip{background:var(--ai);color:#fff;border-radius:18px;display:grid;grid-template-columns:1.3fr 1fr 1fr 1.2fr;overflow:hidden;position:relative}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .strip{background:#1E2C5C}}
+:root[data-theme="dark"] .strip{background:#1E2C5C}
+.cell{padding:18px 20px;display:flex;flex-direction:column;gap:4px;min-width:0;border-right:1px dashed rgba(255,255,255,.28)}
+.cell:last-child{border-right:0}
+.cell .lbl{color:rgba(255,255,255,.72)}
+.big{font:700 clamp(28px,4vw,38px)/1.05 var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.mid{font:600 20px/1.2 var(--display);font-variant-numeric:tabular-nums}
+.cell small{color:rgba(255,255,255,.75);font-size:12.5px}
+.cell input[type=date]{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:9px;padding:6px 9px;font:500 14px var(--mono);color-scheme:dark;max-width:100%}
+.alert{display:inline-flex;align-items:center;gap:6px;background:#fff;color:var(--stamp);border-radius:7px;padding:2px 8px;font:600 12px var(--sans);width:fit-content}
+@media (max-width:820px){.strip{grid-template-columns:1fr 1fr}.cell:nth-child(2){border-right:0}.cell:nth-child(-n+2){border-bottom:1px dashed rgba(255,255,255,.28)}}
+@media (max-width:420px){.strip{grid-template-columns:1fr}.cell{border-right:0;border-bottom:1px dashed rgba(255,255,255,.28)}.cell:last-child{border-bottom:0}}
+
+/* main grid */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px 0;flex-wrap:wrap}
+.card-h h2{font-size:19px;font-weight:700}
+.card-b{padding:14px 18px 18px}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+
+/* form */
+form.add{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;align-items:end}
+form.add .rate{grid-column:1/3}
+@media (max-width:620px){form.add{grid-template-columns:1fr 1fr}form.add .store{grid-column:1/-1}form.add .rate{grid-column:1/-1}}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.f input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 11px;font:15px var(--sans)}
+.f input.num{font-family:var(--mono)}
+.f input:focus{outline:none;border-color:var(--ai);box-shadow:0 0 0 3px color-mix(in srgb,var(--ai) 20%,transparent)}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:7px;padding:7px 8px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.btn{border:1px solid var(--line-2);background:var(--paper);border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px;cursor:pointer;transition:transform .12s,background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn-primary:hover{background:var(--ai);border-color:var(--ai);color:#fff}
+.btn-sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+.btn-quiet{border-color:transparent;background:transparent;color:var(--muted)}
+.btn-quiet:hover{color:var(--stamp);border-color:transparent}
+.err{color:var(--stamp);font-size:13px;margin:8px 0 0;min-height:0}
+
+/* ledger */
+.ledger{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.item{border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;background:var(--paper);position:relative;animation:in .3s ease both}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.item.example{border-style:dashed}
+.item h3{font:600 16px var(--sans);letter-spacing:0;overflow-wrap:anywhere}
+.meta{font-size:12.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.refund{text-align:right}
+.refund .num{font-size:18px;font-weight:500}
+.refund small{display:block;font-size:11.5px;color:var(--dim)}
+.chips{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{font:500 11.5px var(--mono);border-radius:999px;padding:2px 9px;border:1px solid transparent}
+.c-ok{background:var(--ok-soft);color:var(--ok)}
+.c-warn{background:var(--warn-soft);color:var(--warn)}
+.c-bad{background:var(--stamp-soft);color:var(--stamp)}
+.c-ai{background:var(--ai-soft);color:var(--ai)}
+.c-plain{border-color:var(--line);color:var(--muted)}
+.steps{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.track{display:flex;gap:4px;flex:1;min-width:220px}
+.track button{flex:1;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 4px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
+.track button.done{background:var(--ai-soft);color:var(--ai);border-color:color-mix(in srgb,var(--ai) 35%,transparent)}
+.track button.now{background:var(--ai);color:#fff;border-color:var(--ai)}
+:root[data-theme="dark"] .track button.now{color:#0F1320}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .track button.now{color:#0F1320}}
+select{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 8px;font:13px var(--sans)}
+.eta{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+.empty{border:1.5px dashed var(--line-2);border-radius:14px;padding:26px 18px;text-align:center;color:var(--muted);margin-top:16px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* checklist */
+.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.check li{border-top:1px solid var(--line)}
+.check li:first-child{border-top:0}
+.check label{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding:10px 0;cursor:pointer;font-size:14px;line-height:1.4}
+.check input{width:18px;height:18px;accent-color:var(--ai);margin:1px 0 0}
+.check input:checked + span{color:var(--dim);text-decoration:line-through}
+.progress{height:6px;border-radius:4px;background:var(--sunk);overflow:hidden;margin-bottom:6px}
+.progress i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.rules{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.rules li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px}
+.rules b{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--ai);background:var(--ai-soft);border-radius:6px;padding:2px 7px;height:fit-content;white-space:nowrap}
+a{color:var(--ai);text-underline-offset:3px}
+.links{display:flex;flex-direction:column;gap:6px;margin-top:14px;font-size:13.5px}
+.note{font-size:12.5px;color:var(--muted);margin:12px 0 0}
+
+/* footer / legal */
+footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)}
+.disclaimer{background:var(--warn-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:12px;padding:12px 14px;font-size:13px}
+details{border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--ink)}
+details div{padding:0 14px 12px;max-width:72ch}
+details p{margin:8px 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);opacity:0;background:var(--ink);color:var(--paper);padding:9px 15px;border-radius:10px;font-size:13.5px;transition:all .25s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="seal" aria-hidden="true">TAX<br>¥</div>
+      <div>
+        <h1>Refund Ready Japan</h1>
+        <p class="sub">Track your tax-free purchases under Japan's new refund system (from Nov 1, 2026). See your estimated refund and every 90-day deadline. Your data never leaves this browser.</p>
+      </div>
+    </div>
+    <span class="badge">Unofficial tool · Not affiliated with the Japanese government</span>
+  </header>
+
+  <section class="strip" aria-label="Summary">
+    <div class="cell"><span class="lbl">Estimated refund</span><span class="big" id="sTotal">¥0</span><small id="sTotalSub">Upper estimate, before any service fees</small></div>
+    <div class="cell"><span class="lbl">Received</span><span class="mid" id="sRecv">¥0</span><small id="sRecvSub">0 of 0 purchases</small></div>
+    <div class="cell"><span class="lbl">Next deadline</span><span class="mid" id="sNext">None</span><small id="sNextSub">Customs check within 90 days</small></div>
+    <div class="cell"><label class="lbl" for="depart">Your departure date</label><input type="date" id="depart"><span id="sDepart"></span></div>
+  </section>
+
+  <div class="main">
+    <div class="col">
+      <section class="card" aria-labelledby="hLedger">
+        <div class="card-h"><h2 id="hLedger">Purchases</h2>
+          <div class="toolbar"><button class="btn btn-sm btn-quiet" type="button" id="clearEx" hidden>Remove examples</button><button class="btn btn-sm btn-quiet" type="button" id="wipe">Delete all data</button></div>
+        </div>
+        <div class="card-b">
+          <form class="add" id="add" novalidate>
+            <div class="f store"><label class="lbl" for="store">Store</label><input id="store" placeholder="e.g. Bic Camera Shinjuku" maxlength="60" autocomplete="off"></div>
+            <div class="f"><label class="lbl" for="date">Purchase date</label><input type="date" id="date"></div>
+            <div class="f"><label class="lbl" for="amount">Paid (tax incl.) ¥</label><input id="amount" class="num" inputmode="numeric" placeholder="22,000" autocomplete="off"></div>
+            <div class="f rate"><span class="lbl" id="rateLbl">Tax rate on the receipt</span>
+              <div class="seg" role="group" aria-labelledby="rateLbl" id="rate"><button type="button" aria-pressed="true" data-r="10">10% · General goods</button><button type="button" aria-pressed="false" data-r="8">8% · Food &amp; drinks</button></div></div>
+            <button class="btn btn-primary" type="submit">Add purchase</button>
+          </form>
+          <p class="err" id="err" role="alert"></p>
+          <ul class="ledger" id="ledger"></ul>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card" aria-labelledby="hCheck">
+        <div class="card-h"><h2 id="hCheck">At the airport</h2><span class="lbl num" id="checkCount">0/8</span></div>
+        <div class="card-b">
+          <div class="progress"><i id="checkBar" style="width:0"></i></div>
+          <ul class="check" id="check"></ul>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="hRules">
+        <div class="card-h"><h2 id="hRules">What changed on Nov 1, 2026</h2></div>
+        <div class="card-b">
+          <ul class="rules">
+            <li><b>Before</b><span>Tax was removed at the register.</span></li>
+            <li><b>Now</b><span>You pay the full price with tax. The tax is refunded after customs confirms you are taking the goods out of Japan.</span></li>
+            <li><b>At the store</b><span>Show your passport and set up how you'll get the refund (for example, your credit card). Ask the store to explain its refund steps.</span></li>
+            <li><b>¥5,000</b><span>Minimum purchase before tax, counted per store per day. Gold and platinum bullion and tax-exempt items don't qualify.</span></li>
+            <li><b>90 days</b><span>The customs check must be done within 90 days of each purchase (up from 30). The official wording doesn't say whether the purchase day counts, so this tool shows the earlier possible date to keep you safe.</span></li>
+            <li><b>No seal</b><span>Consumables no longer need sealed bags, but items used or eaten in Japan are not refunded.</span></li>
+            <li><b>Per receipt</b><span>Customs checks each receipt as a whole. Carry everything you bought.</span></li>
+            <li><b>Refund</b><span>Paid by the store or a refund service it uses, usually after the customs check: bank transfer, card, app, or sometimes cash at the airport. Which ones are offered and when you get paid depend on the store, so ask when you buy.</span></li>
+          </ul>
+          <div class="links">
+            <span class="lbl">Official sources</span>
+            <a href="https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00028.html" target="_blank" rel="noopener">Japan Tourism Agency: new refund method ↗</a>
+            <a href="https://www.mlit.go.jp/kankocho/tax-free/content/001991255.pdf" target="_blank" rel="noopener">Official traveler leaflet (English PDF) ↗</a>
+            <a href="https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00027.html" target="_blank" rel="noopener">Traveler FAQ ↗</a>
+            <a href="https://services.digital.go.jp/en/visit-japan-web/" target="_blank" rel="noopener">Visit Japan Web ↗</a>
+          </div>
+          <p class="note">Rules checked against the Japan Tourism Agency site on Oct 20, 2026. Details can change; always follow the store, the refund service and Japan Customs.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <div class="disclaimer"><strong>Estimates only.</strong> This is an unofficial, free tool for personal record keeping. It is not tax advice and does not decide whether you qualify. Actual refunds depend on the store, the refund service, any fees, and Japan Customs.</div>
+    <details><summary>Disclaimer</summary><div>
+      <p>Refund Ready Japan is an independent project. It is not operated by, endorsed by, or affiliated with the Japan Tourism Agency, the Japan National Tourism Organization, Japan Customs, the National Tax Agency or any store.</p>
+      <p>Amounts shown are calculated from the numbers you enter, using the consumption tax rate you select. They are upper estimates and do not include handling fees that a store or refund service may charge.</p>
+      <p>Information on this page was summarized from public sources on the date shown and may be incomplete or out of date. Please confirm the rules with official sources and the store before you rely on them.</p>
+    </div></details>
+    <details><summary>Terms of use</summary><div>
+      <p>This tool is provided free of charge, as is. You use it for your own records and make your own decisions about purchases, travel plans and refund procedures.</p>
+      <p>Do not use this tool to misrepresent purchases to stores or customs. Keep your official receipts and records; this page does not replace them.</p>
+      <p>The operator will fix errors when they are reported and may change or stop the tool at any time.</p>
+    </div></details>
+    <details><summary>Privacy</summary><div>
+      <p>Everything you enter is saved only in your own browser's local storage on this device. Nothing is sent to a server, and there is no account, tracking or analytics.</p>
+      <p>The tool never asks for your passport number or payment details. Do not enter them anywhere on this page.</p>
+      <p>You can erase all saved data at any time with "Delete all data". Clearing your browser data also removes it.</p>
+    </div></details>
+    <span>Rules last checked: Oct 20, 2026 · Free and unofficial</span>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const NEW_SYSTEM = "2026-11-01", WINDOW = 90, MIN_EXCL = 5000;
+const STATUS = ["Bought","Customs confirmed","Refunded"];
+const METHODS = {card:"Credit card · timing set by the store",bank:"Bank transfer · timing set by the store",cash:"Cash at the airport · after the customs check",app:"App / e-wallet · timing set by the service",unknown:"Not sure yet · ask the store"};
+const CHECK = [
+  "Keep every tax-free item with you. Once a bag is checked in, you can't get it back for the customs check.",
+  "Bring every item on each receipt. If one item from a receipt is missing, nothing on that receipt qualifies.",
+  "Don't use or eat tax-free food, drinks or cosmetics in Japan. If you did, skip the kiosk and tell a customs officer at the counter.",
+  "Get to the airport early. Missing a flight because of this check isn't compensated.",
+  "In the departure lobby, before check-in, scan your passport at a tax-free kiosk (or use Visit Japan Web at 7 major airports).",
+  "Green screen means done. Red screen means take the goods to the customs inspection area.",
+  "Connecting through Japan? Do the check at the last airport you leave Japan from.",
+  "Follow each store's refund instructions and watch for the payment."
+];
+const $ = s=>document.querySelector(s);
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen = n=>"¥"+Math.round(n).toLocaleString("en-US");
+
+/* dates as YYYY-MM-DD, math in UTC to avoid DST/timezone drift */
+const toUTC = s=>{const [y,m,d]=s.split("-").map(Number);return Date.UTC(y,m-1,d)};
+const fromUTC = t=>new Date(t).toISOString().slice(0,10);
+const addDays = (s,n)=>fromUTC(toUTC(s)+n*864e5);
+const diff = (a,b)=>Math.round((toUTC(b)-toUTC(a))/864e5);
+const todayStr = (()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`})();
+const pretty = s=>new Date(toUTC(s)).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"});
+
+let S = store.get("rr.state",null);
+if(!S){
+  // example trip dated from today (or Nov 1, 2026 if earlier) so it never looks stale
+  const base = todayStr>NEW_SYSTEM?todayStr:NEW_SYSTEM;
+  S = {depart:addDays(base,11), rate:10, checks:[], items:[
+    {id:1,store:"Electronics store, Shinjuku (example)",date:addDays(base,2),amount:38500,rate:10,status:1,method:"card",example:true},
+    {id:2,store:"Matcha & snacks shop, Kyoto (example)",date:addDays(base,5),amount:6480,rate:8,status:0,method:"unknown",example:true},
+    {id:3,store:"Drugstore, Osaka (example)",date:addDays(base,7),amount:4400,rate:10,status:0,method:"cash",example:true}
+  ]};
+}
+S.rate = S.rate||10;
+const save = ()=>store.set("rr.state",S);
+
+const exclOf = it=>it.amount*100/(100+it.rate);
+const gkey = it=>it.store.trim().toLowerCase()+"|"+it.date;
+function calc(it){
+  const excl=exclOf(it), tax=Math.floor(it.amount*it.rate/(100+it.rate));
+  const old = it.date < NEW_SYSTEM;
+  // official text: "within 90 days from the date of purchase"; day 1 isn't defined, so show the earlier possible date
+  const deadline = addDays(it.date, WINDOW-1);
+  // official rule: ¥5,000 before tax, counted per store per day
+  const dayTotal = S.items.filter(x=>gkey(x)===gkey(it)).reduce((a,x)=>a+exclOf(x),0);
+  return {excl,tax,old,deadline,dayTotal,combined:dayTotal>excl+0.5,eligible:!old && dayTotal>=MIN_EXCL};
+}
+
+function render(){
+  // ledger
+  const L=$("#ledger");
+  const items=[...S.items].sort((a,b)=>a.date.localeCompare(b.date));
+  if(!items.length){L.innerHTML='<li class="empty">No purchases yet. Add your first tax-free receipt above to see its refund and deadline.</li>'}
+  else L.innerHTML=items.map(it=>{
+    const c=calc(it);
+    const chips=[];
+    if(c.old) chips.push('<span class="chip c-plain">Old system · tax was removed at the register</span>');
+    else{
+      chips.push(c.eligible?`<span class="chip c-ok">${c.combined?"Same store & day total over ¥5,000":"Over ¥5,000 before tax"}</span>`
+        :`<span class="chip c-warn">Store total that day ${yen(c.dayTotal)} before tax · under ¥5,000</span>`);
+      if(it.status<1){
+        const left=diff(todayStr,c.deadline);
+        const fut=diff(todayStr,it.date)>0;
+        chips.push(left<0?`<span class="chip c-bad">Deadline passed ${pretty(c.deadline)}</span>`
+          :`<span class="chip ${left<=14?"c-bad":"c-ai"}">Customs by ${pretty(c.deadline)}${fut?"":` · ${left} days left`}</span>`);
+        if(S.depart && S.depart>c.deadline) chips.push('<span class="chip c-bad">You leave after this deadline</span>');
+      }
+    }
+    if(it.example) chips.push('<span class="chip c-plain">Example</span>');
+    const track=STATUS.map((s,i)=>`<button type="button" data-st="${i}" class="${i<it.status?"done":i===it.status?"now":""}" aria-pressed="${i===it.status}">${s}</button>`).join("");
+    const opts=Object.entries(METHODS).map(([k,v])=>`<option value="${k}"${k===it.method?" selected":""}>${v.split(" · ")[0]}</option>`).join("");
+    return `<li class="item${it.example?" example":""}" data-id="${it.id}">
+      <div style="min-width:0"><h3>${esc(it.store)}</h3><div class="meta"><span>${pretty(it.date)}</span><span class="num">${yen(it.amount)} paid</span><span>${it.rate}% tax</span></div></div>
+      <div class="refund"><span class="num" style="${c.old?"color:var(--dim)":""}">${c.old?"—":yen(c.tax)}</span><small>${c.old?"not tracked":"est. refund"}</small></div>
+      <div class="chips">${chips.join("")}</div>
+      ${c.old?"":`<div class="steps"><div class="track" role="group" aria-label="Refund status">${track}</div>
+        <select aria-label="Refund method" data-m>${opts}</select>
+        <button class="btn btn-sm btn-quiet" type="button" data-del aria-label="Delete purchase">Delete</button></div>
+      <div class="eta">${it.status===2?"Refund received.":it.status===1?`Waiting for refund · ${METHODS[it.method].split(" · ")[1]||"ask the store"}`:`Refund method: ${METHODS[it.method]}`}</div>`}
+      ${c.old?`<div class="steps"><button class="btn btn-sm btn-quiet" type="button" data-del>Delete</button></div>`:""}
+    </li>`;
+  }).join("");
+  $("#clearEx").hidden=!S.items.some(i=>i.example);
+
+  // summary
+  const live=S.items.map(i=>({i,c:calc(i)})).filter(x=>!x.c.old);
+  const total=live.filter(x=>x.c.eligible).reduce((a,x)=>a+x.c.tax,0);
+  const recv=live.filter(x=>x.i.status===2);
+  $("#sTotal").textContent=yen(total);
+  $("#sTotalSub").textContent=`From ${live.filter(x=>x.c.eligible).length} eligible purchase${live.filter(x=>x.c.eligible).length===1?"":"s"} · before any fees`;
+  $("#sRecv").textContent=yen(recv.reduce((a,x)=>a+x.c.tax,0));
+  $("#sRecvSub").textContent=`${recv.length} of ${live.length} purchases refunded`;
+  const pend=live.filter(x=>x.i.status===0).sort((a,b)=>a.c.deadline.localeCompare(b.c.deadline));
+  if(pend.length){const n=pend[0];$("#sNext").textContent=pretty(n.c.deadline);$("#sNextSub").textContent=`${n.i.store.replace(/ \(example\)$/,"")}`}
+  else{$("#sNext").textContent="None";$("#sNextSub").textContent="No purchases waiting for customs"}
+  const late=pend.filter(x=>S.depart&&S.depart>x.c.deadline).length;
+  const before=S.depart&&S.items.some(i=>i.date>S.depart);
+  $("#sDepart").innerHTML = !S.depart?'<small>Add it to check your deadlines</small>'
+    : late?`<span class="alert">⚠ ${late} deadline${late>1?"s":""} before you leave</span>`
+    : before?'<span class="alert">⚠ A purchase is dated after departure</span>'
+    : `<small>${diff(todayStr,S.depart)>0?`${diff(todayStr,S.depart)} days away · `:""}All deadlines OK</small>`;
+
+  // checklist
+  $("#check").innerHTML=CHECK.map((t,i)=>`<li><label><input type="checkbox" id="ck${i}" data-ck="${i}"${S.checks.includes(i)?" checked":""}><span>${t}</span></label></li>`).join("");
+  $("#checkCount").textContent=`${S.checks.length}/${CHECK.length}`;
+  $("#checkBar").style.width=(S.checks.length/CHECK.length*100)+"%";
+  save();
+}
+
+/* form */
+$("#date").value=todayStr>NEW_SYSTEM?todayStr:NEW_SYSTEM;
+$("#depart").value=S.depart||"";
+const setRate=r=>{S.rate=r;document.querySelectorAll("#rate button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.r===r))};
+setRate(S.rate);
+$("#rate").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setRate(+b.dataset.r)});
+$("#amount").addEventListener("input",e=>{const d=e.target.value.replace(/[^\d]/g,"");e.target.value=d?Number(d).toLocaleString("en-US"):""});
+$("#add").addEventListener("submit",e=>{
+  e.preventDefault();
+  const store_=$("#store").value.trim(), date=$("#date").value, amount=Number($("#amount").value.replace(/[^\d]/g,""));
+  const err=$("#err");
+  if(!store_) {err.textContent="Add the store name so you can find this receipt later.";$("#store").focus();return}
+  if(!date) {err.textContent="Pick the purchase date from your receipt.";$("#date").focus();return}
+  if(!amount) {err.textContent="Enter the amount you paid, including tax, in yen.";$("#amount").focus();return}
+  err.textContent="";
+  S.items.push({id:Date.now(),store:store_,date,amount,rate:S.rate,status:0,method:"unknown"});
+  $("#store").value="";$("#amount").value="";
+  render(); toast(date<NEW_SYSTEM?"Added. This date is before the new system started.":"Purchase added");
+});
+$("#depart").addEventListener("change",e=>{S.depart=e.target.value;render()});
+
+/* ledger actions */
+$("#ledger").addEventListener("click",e=>{
+  const li=e.target.closest(".item"); if(!li) return;
+  const it=S.items.find(x=>x.id==li.dataset.id); if(!it) return;
+  const st=e.target.closest("[data-st]");
+  if(st){it.status=+st.dataset.st;render();if(it.status===2)toast("Marked as refunded");return}
+  const del=e.target.closest("[data-del]");
+  if(del){
+    if(del.dataset.armed){S.items=S.items.filter(x=>x!==it);render();toast("Purchase deleted")}
+    else{del.dataset.armed="1";del.textContent="Confirm delete";setTimeout(()=>{if(del.isConnected){delete del.dataset.armed;del.textContent="Delete"}},2500)}
+  }
+});
+$("#ledger").addEventListener("change",e=>{if(e.target.matches("[data-m]")){const it=S.items.find(x=>x.id==e.target.closest(".item").dataset.id);it.method=e.target.value;render()}});
+$("#check").addEventListener("change",e=>{const i=+e.target.dataset.ck;S.checks=e.target.checked?[...new Set([...S.checks,i])]:S.checks.filter(x=>x!==i);render()});
+$("#clearEx").addEventListener("click",()=>{S.items=S.items.filter(i=>!i.example);render();toast("Examples removed")});
+$("#wipe").addEventListener("click",e=>{
+  const b=e.currentTarget;
+  if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Tap again to delete everything";setTimeout(()=>{delete b.dataset.armed;b.textContent="Delete all data"},3000);return}
+  delete b.dataset.armed;b.textContent="Delete all data";
+  S={depart:"",rate:10,checks:[],items:[]};store.del("rr.state");$("#depart").value="";render();toast("All data deleted from this browser");
+});
+
+let tt;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2200)}
+render();
+</script>
